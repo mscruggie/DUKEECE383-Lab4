@@ -130,7 +130,8 @@ class UR5WithGripperController(object):
         self.q[6]=q_g 
         
         #TODO: do we use differencing or the "sensors"
-        self.dq = self._controller.getSensedVelocity()[1:7]+[self.robot.driver(ee_driver).getVelocity()]
+        # PIAZZA SAYS TO COMMENT THIS LINE BELOW 
+        # self.dq = self._controller.getSensedVelocity()[1:7]+[self.robot.driver(ee_driver).getVelocity()]
     
     def _outputPID(self):
         #Internally used to command the simulated robot
@@ -144,8 +145,19 @@ class UR5WithGripperController(object):
         
         if self.qcmd is not None:
             #the user gave some command
-            dq_des = [0]*len(self.qcmd)
             q_des=self.qcmd
+            dq_des = [0]*len(self.qcmd)
+            # Judi added this for loop that calculates velocity limits
+            for i in range(7):
+                link = self.robot.driver(i).getAffectedLink()
+                maxVelocity = self.robot.getVelocityLimits()[link]
+                dq_des[i] = maxVelocity
+                # This if statement is supposed to like make the changes in the end efector's position less drastic
+                if i == ee_driver:
+                    if (q_des[i] - self.q[i])/self.dt > dq_des[i]:
+                        q_des[i] = self.q[i] + (dq_des[i] * self.dt*2*(i+1))
+                    elif (q_des[i] - self.q[i])/self.dt < -dq_des[i]:
+                        q_des[i] = self.q[i] - (dq_des[i] * self.dt*2*(i+1))
             self._controller.setPIDCommand(q_des, dq_des)
         else:
             pass
