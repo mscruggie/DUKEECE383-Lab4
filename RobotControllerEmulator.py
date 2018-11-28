@@ -142,6 +142,7 @@ class UR5WithGripperController(object):
         # Your job is to figure out how to adjust the commands that 
         # the resulted trajectory matches the recorded trajectory from the actual robot.
         # The current code simply sets q_des=qcmd and dq_des equal to 0. 
+        print "Current Gains: ", self._controller.getPIDGains();
         
         if self.qcmd is not None:
             #the user gave some command
